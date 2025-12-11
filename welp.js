@@ -1,31 +1,25 @@
-// One single JS script to fetch cookies from a website and output JSON
-// Requires: axios + tough-cookie + axios-cookiejar-support
-// Install with: npm install axios tough-cookie axios-cookiejar-support
+const https = require('https');
 
-const axios = require('axios').default;
-const { wrapper } = require('axios-cookiejar-support');
-const tough = require('tough-cookie');
+function getCookiesAsJSON(url) {
+  https.get(url, (res) => {
+    // Extract "set-cookie" headers
+    const setCookies = res.headers['set-cookie'] || [];
 
-async function getCookiesAsJSON(url) {
-  // Create a cookie jar
-  const cookieJar = new tough.CookieJar();
+    const cookieObj = {};
+    setCookies.forEach(cookieStr => {
+      // Each cookie string looks like: "name=value; Path=/; HttpOnly"
+      const parts = cookieStr.split(';')[0]; // take only "name=value"
+      const [name, value] = parts.split('=');
+      if (name && value) {
+        cookieObj[name.trim()] = decodeURIComponent(value.trim());
+      }
+    });
 
-  // Wrap axios to support cookies
-  const client = wrapper(axios.create({ jar: cookieJar, withCredentials: true }));
-
-  // Make request
-  await client.get(url);
-
-  // Extract cookies from jar
-  const cookies = cookieJar.getCookiesSync(url);
-  const cookieJSON = {};
-  cookies.forEach(c => {
-    cookieJSON[c.key] = c.value;
+    console.log(JSON.stringify(cookieObj, null, 2));
+  }).on('error', (err) => {
+    console.error('Error fetching URL:', err.message);
   });
-
-  // Print JSON
-  console.log(JSON.stringify(cookieJSON, null, 2));
 }
 
-// Example usage
+// Example usage:
 getCookiesAsJSON('https://roblox.com');
