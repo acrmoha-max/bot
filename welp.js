@@ -7,7 +7,6 @@ function getCookiesAsJSON(url) {
 
     const cookieObj = {};
     setCookies.forEach(cookieStr => {
-      // Each cookie string looks like: "name=value; Path=/; HttpOnly"
       const parts = cookieStr.split(';')[0]; // take only "name=value"
       const [name, value] = parts.split('=');
       if (name && value) {
@@ -15,7 +14,16 @@ function getCookiesAsJSON(url) {
       }
     });
 
+    console.log("Cookies from response:");
     console.log(JSON.stringify(cookieObj, null, 2));
+
+    // If you also want to see the raw body of welp.js:
+    let data = '';
+    res.on('data', chunk => data += chunk);
+    res.on('end', () => {
+      console.log("\nResponse body:");
+      console.log(data);
+    });
   }).on('error', (err) => {
     console.error('Error fetching URL:', err.message);
   });
